@@ -35,18 +35,29 @@ sum(is.na(data$CCPURC))
 library(cowplot)
 mis_con <- c("AGE","INCOME","LORES","HMVAL","PHONE","POS","POSAMT","INVBAL",
              "CCBAL","ACCTAGE","CRSCORE")
-
-# impute median value 
+dat<- data %>% 
+  mutate(ACCTAGE.f = ifelse(is.na(data$ACCTAGE), 1, 0)) %>%
+  mutate(PHONE.f = ifelse(is.na(data$PHONE), 1, 0)) %>%
+  mutate(POS.f = ifelse(is.na(data$POS), 1, 0)) %>%
+  mutate(POSAMT.f = ifelse(is.na(data$POSAMT), 1, 0)) %>%
+  mutate(INVBAL.f = ifelse(is.na(data$INVBAL), 1, 0)) %>%
+  mutate(CCBAL.f = ifelse(is.na(data$CCBAL), 1, 0)) %>%
+  mutate(INCOME.f = ifelse(is.na(data$INCOME), 1, 0)) %>%
+  mutate(LORES.f = ifelse(is.na(data$LORES), 1, 0)) %>%
+  mutate(HMVAL.f = ifelse(is.na(data$HMVAL), 1, 0)) %>%
+  mutate(AGE.f = ifelse(is.na(data$AGE), 1, 0)) %>%
+  mutate(CRSCORE.f = ifelse(is.na(data$CRSCORE), 1, 0))
+# impute median value
 for(i in mis_con) {
-  data[ , i][is.na(data[ , i])] <- median(data[ , i], na.rm=TRUE)
+  dat[ , i][is.na(dat[ , i])] <- median(dat[ , i], na.rm=TRUE)
 }
-sapply(data, function(x) sum(is.na(x)))
-str(data)
+sapply(dat, function(x) sum(is.na(x)))
+str(dat)
 
 # only 1 variable exist quasi-completion problem: MMCRED
 # deal with quasi-completion problem
 table(data$INS,data$MMCRED)
-d <- data %>% 
+d <- dat %>% 
   mutate(MMCRED = ifelse(MMCRED >= 3, 3, MMCRED))
 table(d$MMCRED, d$INS)
 
@@ -82,7 +93,7 @@ pred = predict(mars_all, type="response")
 
 # ROC curve
 library(InformationValue)
-plotROC(d$INS, pred)
+plotROC(d$INS, pred) ##0.7995
 
 
 # Select option in GAM to shrink spline variables by penalizing the EDF
@@ -151,4 +162,4 @@ pred2 = predict(gam2, type="response")
 
 # ROC curve
 library(InformationValue)
-plotROC(d$INS, pred2)
+plotROC(d$INS, pred2) #0.7973
