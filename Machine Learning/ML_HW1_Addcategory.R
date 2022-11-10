@@ -146,7 +146,7 @@ sel.gam <- mgcv::gam(INS ~ s(ACCTAGE) +
                        s(HMVAL) + 
                        s(AGE) + 
                        s(CRSCORE) + 
-                       factor(INAREA),
+                       factor(INAREA)+factor(BRANCH),
                       method = 'REML', select = TRUE, data = train,family = 'binomial')
 summary(sel.gam) #R-sq.(adj) =  0.239 
 
@@ -167,7 +167,7 @@ sel.gam2 <- mgcv::gam(INS ~ s(ACCTAGE) +
                         factor(IRA)+
                         factor(INV)+
                         factor(MM)+
-                        factor(CC)
+                        factor(CC)+factor(BRANCH)
                       , method = 'REML', data = train,family = 'binomial')
 summary(sel.gam2)#R-sq.(adj) =   0.24
 
