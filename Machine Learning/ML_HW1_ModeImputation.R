@@ -131,7 +131,7 @@ gam <- mgcv::gam(INS ~ s(ACCTAGE) +
                        s(HMVAL) + 
                        s(AGE) + 
                        s(CRSCORE) + 
-                       factor(INAREA),
+                       factor(INAREA)+factor(BRANCH),
                      method = 'REML', select = TRUE, data = d,family = 'binomial')
 summary(gam) #R-sq.(adj) =  0.235
 
@@ -152,7 +152,7 @@ gam2 <- mgcv::gam(INS ~ s(ACCTAGE) +
                         factor(IRA)+
                         factor(INV)+
                         factor(MM)+
-                        factor(CC)
+                        factor(CC)+factor(BRANCH)
                       , method = 'REML', data = d,family = 'binomial')
 summary(gam2) #R-sq.(adj) =  0.236 
 
