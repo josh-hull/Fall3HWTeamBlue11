@@ -36,3 +36,43 @@ plot(hurricane.aft.w, type = "cumhaz", ci = TRUE, conf.int = FALSE, las = 1, bty
 hurricane.aft.ll <- flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation, data = hurricane1, dist = 'llogis')
 plot(hurricane.aft.ll, type = "cumhaz", ci = TRUE, conf.int = FALSE, las = 1, bty = "n", xlab = "week", ylab = "Cumulative Hazard", main = "Log Logistic Distribution")
 
+
+like.e = flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation , data = hurricane1, dist = "exp")$loglik
+like.w <- flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation  , data = hurricane1, dist = 'weibull')$loglik
+like.ln <- flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation  , data = hurricane1, dist = "lnorm")$loglik
+like.g =flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation  , data = hurricane1, dist = "gamma")$loglik
+like.ll = flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation  , data = hurricane1,dist = "llogis")$loglik
+
+
+pval.e.g = pchisq((-2*(like.e-like.g)), 2,lower.tail=F)
+pval.w.g = pchisq((-2*(like.w-like.g)), 1,lower.tail=F)
+pval.ln.g = pchisq((-2*(like.ln-like.g)), 1,lower.tail=F)
+Tests = c('Exp vs. Gam', 'Wei vs. Gam', 'LogN vs. Gam') 
+
+
+P_values = c(pval.e.g, pval.w.g, pval.ln.g)
+cbind(Tests, P_values)
+
+#####full model
+hurricane.aft.w = survreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation  , data = hurricane1, dist = 'weibull')
+summary(hurricane.aft.w)
+
+#backwards selection
+#full model. Using hurricane.aft.w in its place
+# full.aft.w = survreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation
+#                       , data = hurricane1, dist = 'weibul')
+# summary(full.aft.ln)
+
+
+######empty model
+empty.model <- survreg(Surv(hour, flood) ~ 1, data = hurricane1, dist = 'weibul')
+
+#run f
+alpha = 0.03 
+back.model <- step(hurricane.aft.w, scope=list(lower=empty.model,upper=hurricane.aft.w),
+                   direction = "backward",
+                   k=qchisq(alpha, 1, lower.tail = FALSE))
+summary(back.model)
+
+######selected model########
+#survreg(formula = Surv(hour, flood) ~ backup + servo + slope, data = hurricane1, dist = "weibull")
