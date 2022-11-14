@@ -120,6 +120,56 @@ model.ln <- survreg(formula = Surv(hour, flood_fail) ~ backup + servo + slope,
                      data = d, dist = "weibul")
 summary(model.ln)
 
-#Include a table of significant variables ranked by p-value.
-#Interpret the effects of the most significant variable.
+# Q2 -- Not sure if it's correct, need to be discussed in team
+survprob.actual = 1 - psurvreg(d$hour,
+                               mean = predict(model.w, type = "lp"),
+                               scale = model.w$scale, distribution =model.w$dist)
+head(survprob.actual, n = 10)
 
+# Predicted Change in Event Time -- backup, servo (slope--negative coefficient, not sure how to do)
+## backup
+new_time.backup = qsurvreg(1 - survprob.actual,
+                    mean = predict(model.w, type = "lp") +
+                      coef(model.w)['backup'],
+                    scale = model.w$scale,
+                    distribution = model.w$dist)
+
+d$new_time.backup = new_time.backup
+d$diff.backup = d$new_time.backup - d$hour
+
+impact.backup=data.frame(d$hour, d$new_time.backup, d$diff.backup,d$flood_fail,d$backup)
+colnames(impact.backup)=c("O.time","N.time","Diff.backup","Flood_fail","Backup")
+
+impact.backup2=subset(impact.backup,Flood_fail==1 & Backup==0)
+head(impact.backup2)
+
+## servo
+new_time.servo = qsurvreg(1 - survprob.actual,
+                          mean = predict(model.w, type = "lp") +
+                            coef(model.w)['servo'],
+                          scale = model.w$scale,
+                          distribution = model.w$dist)
+d$new_time.servo = new_time.servo
+d$diff.servo = d$new_time.servo - d$hour
+
+impact.servo=data.frame(d$hour, d$new_time.servo, d$diff.servo,d$flood_fail,d$servo)
+colnames(impact.servo)=c("O.time","N.time","Diff.servo","Flood_fail","servo")
+
+impact.servo2=subset(impact.servo,Flood_fail==1 & servo==0)
+head(impact.servo2)
+
+
+# pumps need to be upgrade
+upgrade <- d %>% filter(reason == 1)
+
+# upgrade which variable for each pump 
+### upgrade servo or backup
+a <- upgrade %>% filter(backup==0 & servo==0) %>% select(backup,servo,new_time.backup,new_time.servo,diff.backup,diff.servo)
+sel_bp <- a %>% filter(new_time.backup > 48) 
+sel_ser <- a%>%anti_join(sel_bp,by="new_time.backup")
+### upgrade backup –- $100K
+b = upgrade %>% filter(backup==0 & servo==1) %>% select(backup,servo,new_time.backup,new_time.servo,diff.backup,diff.servo)
+b %>% filter(new_time.backup > 48)
+### upgrade servo -- $150K
+c = upgrade %>% filter(backup==1 & servo==0) %>% select(backup,servo,new_time.backup,new_time.servo,diff.backup,diff.servo)
+c %>% filter(new_time.servo > 48)
