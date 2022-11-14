@@ -1,0 +1,225 @@
+---
+title: "Survival HW 2"
+author: "Josh Hull"
+date: "2022-11-13"
+output: html_document
+---
+
+```{r}
+hurricane <- read_csv("https://raw.githubusercontent.com/sjsimmo2/Survival/master/hurricane.csv")
+
+hurricane <- hurricane %>% mutate(flood = ifelse(reason == 1, 1, 0))
+
+hurricane <- hurricane %>% select(-(h1:h48)) %>% select(-(reason2)) %>% select(-(survive))
+hurricane$index = 1:nrow(hurricane)
+```
+
+```{r}
+#generalized f
+flood_genf <- flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation + reason, data = hurricane, dist = 'genf')
+
+plot(flood_genf, type = "cumhaz", ci = TRUE, conf.int = FALSE, las = 1, bty = "n", xlab = "week", ylab = "Cumulative Hazard", main = "Generalized F Distribution")
+
+flood.like.genf = flood_genf$loglik
+```
+
+```{r}
+#gamma
+flood_gamma <- flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation + reason, data = hurricane, dist = 'gamma')
+
+plot(flood_gamma, type = "cumhaz", ci = TRUE, conf.int = FALSE, las = 1, bty = "n", xlab = "week", ylab = "Cumulative Hazard", main = "Gamma Distribution")
+
+flood.like.gamma = flood_gamma$loglik
+```
+
+```{r}
+#log normal
+flood_ln <- flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation + reason, data = hurricane, dist = 'lnorm')
+
+plot(flood_ln, type = "cumhaz", ci = TRUE, conf.int = FALSE, las = 1, bty = "n", xlab = "week", ylab = "Cumulative Hazard", main = "Log Normal Distribution")
+
+flood.like.ln = flood_ln$loglik
+```
+
+```{r}
+#weibull
+flood_weibull <- flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation + reason, data = hurricane, dist = 'weibull')
+
+plot(flood_weibull, type = "cumhaz", ci = TRUE, conf.int = FALSE, las = 1, bty = "n", xlab = "week", ylab = "Cumulative Hazard", main = "Weibull Distribution")
+
+flood.like.wb = flood_weibull$loglik
+```
+
+```{r}
+#exponential
+flood_exp <- flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation + reason, data = hurricane, dist = 'exp')
+
+plot(flood_exp, type = "cumhaz", ci = TRUE, conf.int = FALSE, las = 1, bty = "n", xlab = "week", ylab = "Cumulative Hazard", main = "Exponential Distribution")
+
+flood.like.exp = flood_exp$loglik
+```
+
+```{r}
+#log logistic
+flood_llogistic <- flexsurvreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation + reason, data = hurricane, dist = 'llogis')
+
+plot(flood_llogistic, type = "cumhaz", ci = TRUE, conf.int = FALSE, las = 1, bty = "n", xlab = "week", ylab = "Cumulative Hazard", main = "Log Logistic Distribution")
+
+flood.like.ll = flood_llogistic$loglik
+```
+
+```{r}
+#testing significance
+pval.ln.g <- pchisq((-2*(flood.like.ln-flood.like.gamma)), 1,lower.tail=F)
+pval.wb.g <- pchisq((-2*(flood.like.wb-flood.like.gamma)), 1,lower.tail=F)
+pval.exp.g <- pchisq((-2*(flood.like.exp-flood.like.gamma)), 1,lower.tail=F)
+pval.exp.wb <- pchisq((-2*(flood.like.exp-flood.like.wb)), 1,lower.tail=F)
+pval.g.f <- pchisq((-2*(flood.like.gamma-flood.like.genf)), 1,lower.tail=F)
+pval.wb.f <- pchisq((-2*(flood.like.wb-flood.like.genf)), 1,lower.tail=F)
+pval.ll.f <- pchisq((-2*(flood.like.ll-flood.like.genf)), 1,lower.tail=F)
+pval.exp.f <- pchisq((-2*(flood.like.exp-flood.like.genf)), 1,lower.tail=F)
+
+Test_names = c('LogN vs. Gam', 'Wei vs. Gam', 'Exp vs Wei', 'Exp vs. Gam', 'Gam vs GenF', 'Wei vs GenF', 'LogL vs GenF', 'Exp vs GenF')
+P_values = c(pval.ln.g, pval.wb.g, pval.exp.g, pval.exp.wb, pval.g.f, pval.wb.f, pval.ll.f, pval.exp.f)
+Tests <- cbind(Test_names, P_values)
+Tests #use weibull, LogL, or F
+```
+
+```{r}
+#creating full and empty models
+full.model.wb = survreg(Surv(hour, flood) ~ backup + age + bridgecrane + servo + gear + trashrack + slope + elevation + reason, data = hurricane, dist = 'weibull')
+
+summary(full.mod.w)
+
+empty.model.wb <- survreg(Surv(hour, flood) ~ 1, data = hurricane, dist = 'weibull')
+```
+
+```{r}
+#backwards model
+alpha = 0.03
+back.model.wb <- step(full.model.wb, scope=list(lower=empty.model.wb,upper=full.model.wb), direction = "backward", k=qchisq(alpha, 1, lower.tail = FALSE))
+
+summary(back.model.wb)
+```
+
+```{r}
+#forward model
+alpha = 0.03
+for.model.wb <- step(empty.model.wb, scope=list(lower=empty.model.wb,upper=full.model.wb), direction = "forward", k=qchisq(alpha, 1, lower.tail = FALSE))
+
+summary(for.model.wb)
+```
+
+```{r}
+#final model
+final.model.wb <- survreg(formula = Surv(hour, flood) ~ backup + servo + slope, data = hurricane, dist = "weibul")
+
+summary(final.model.wb)
+```
+
+```{r}
+survprob.actual = 1 - psurvreg(hurricane$hour, mean = predict(model.wb, type = "lp"), scale = model.wb$scale, distribution =model.wb$dist)
+
+#head(survprob.actual, n = 10)
+```
+
+```{r}
+#add backup
+new_time.backup = qsurvreg(1 - survprob.actual, mean = predict(final.model.wb, type = "lp") + coef(final.model.wb)['backup'], scale = final.model.wb$scale, distribution = final.model.wb$dist)
+
+hurricane$new_time.backup = new_time.backup
+hurricane$diff.backup = hurricane$new_time.backup - hurricane$hour
+```
+
+```{r}
+# impact.backup=data.frame(hurricane$hour, hurricane$new_time.backup, hurricane$diff.backup, hurricane$flood, hurricane$backup, hurricane$index)
+# colnames(impact.backup)=c("O.time","N.time","Diff.backup","Flood","Backup", "Index")
+# #head(impact.backup)
+# 
+# impact.backup2=subset(impact.backup,Flood==1 & Backup==0)
+# impact.backup2= impact.backup2 %>% mutate(N.time = ifelse(N.time >= 48, 48, N.time))
+# impact.backup2= impact.backup2 %>% mutate(Diff.backup = N.time-O.time)
+# impact.backup2
+# impact.backup2.sorted <- arrange(impact.backup2, -Diff.backup)
+# impact.backup2.sorted
+# #head(impact.backup2)
+```
+
+```{r}
+#add servo
+new_time.servo = qsurvreg(1 - survprob.actual, mean = predict(final.model.wb, type = "lp") + coef(final.model.wb)['servo'], scale = final.model.wb$scale, distribution = final.model.wb$dist)
+
+hurricane$new_time.servo = new_time.servo
+hurricane$diff.servo = hurricane$new_time.servo - hurricane$hour
+```
+
+```{r}
+# impact.servo=data.frame(hurricane$hour, hurricane$new_time.servo, hurricane$diff.servo, hurricane$flood, hurricane$servo, hurricane$index)
+# colnames(impact.servo)=c("O.time","N.time","Diff.servo","Flood","Servo", "Index")
+# #head(impact.servo)
+# 
+# impact.servo2=subset(impact.servo,Flood==1 & Servo==0)
+# impact.servo2= impact.servo2 %>% mutate(N.time = ifelse(N.time >= 48, 48, N.time))
+# impact.servo2= impact.servo2 %>% mutate(Diff.servo = N.time-O.time)
+# impact.servo2
+# impact.servo2.sorted <- arrange(impact.servo2, -Diff.servo)
+# impact.servo2.sorted
+```
+
+
+```{r}
+#creating dataframe for determining upgrade
+upgrade <- hurricane %>% filter(reason==1)
+upgrade <- upgrade %>% mutate(new_time.backup = ifelse(new_time.backup >= 48, 48, new_time.backup)) %>% mutate(new_time.servo = ifelse(new_time.servo >= 48, 48, new_time.servo))
+upgrade <- upgrade %>% mutate(diff.backup = new_time.backup-hour) %>% mutate(diff.servo = new_time.servo-hour)
+upgrade <- upgrade %>% mutate(backup_upgrade_value = (upgrade$diff.backup)/10) %>% mutate(servo_upgrade_value = (upgrade$diff.servo)/15)
+upgrade <- upgrade %>% filter(backup==0 | servo==0)
+upgrade$value <- 0
+upgrade <- upgrade %>% mutate(value = ifelse(backup==1 & servo==0, servo_upgrade_value, value))
+upgrade <- upgrade %>% mutate(value = ifelse(backup==0 & servo==1, backup_upgrade_value, value))
+upgrade <- upgrade %>% mutate(value = ifelse(backup==0 & servo==0 & backup_upgrade_value>servo_upgrade_value, backup_upgrade_value, value))
+upgrade <- upgrade %>% mutate(value = ifelse(backup==0 & servo==0 & backup_upgrade_value<servo_upgrade_value, servo_upgrade_value, value))
+upgrade <- upgrade %>% mutate(upgrade_type = ifelse(value==backup_upgrade_value, 'backup', 'servo'))
+upgrade <- upgrade %>% mutate(cost = ifelse(upgrade_type=='backup', 100, 150))
+upgrade <- upgrade %>% mutate(impact = ifelse(upgrade_type=='backup', diff.backup, diff.servo))
+```
+
+```{r}
+#simplifying to relevant columns
+upgrade_simple <- upgrade %>% select(index, hour, upgrade_type, impact, value, cost, backup, servo) %>% arrange(-value)
+```
+
+```{r}
+#identifying pumps for upgrade
+sum(upgrade_simple$cost[1:18]) + sum(upgrade_simple$cost[21]) + sum(upgrade_simple$cost[24])
+sum(upgrade_simple$impact[1:18]) + sum(upgrade_simple$impact[21]) + sum(upgrade_simple$impact[24])
+upgrade_list <- rbind(upgrade_simple[1:18,], upgrade_simple[21,], upgrade_simple[24,])
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
