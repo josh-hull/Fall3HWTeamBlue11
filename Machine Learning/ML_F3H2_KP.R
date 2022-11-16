@@ -110,14 +110,14 @@ varImpPlot(rf.ins,
            main = "Top 20 - Variable Importance")
 importance(rf.ins)
 
-# Tune random forest mtry value now with ntree = 100
+# Tune random forest mtry value now with ntree = 150
 set.seed(12345)
 tuneRF(x = ins.t.imputed[,-1], y = ins.t.imputed[,1], 
        plot = TRUE, ntreeTry = 150, stepFactor = 0.5)
 
-# Re-run random forest now with ntree=100 and mtry=7
+# Re-run random forest now with ntree=150 and mtry=17
 set.seed(12345)
-rf.ins2 <- randomForest(INS ~ ., data = ins.t.imputed, ntree = 150, mtry = 7, importance = TRUE)
+rf.ins2 <- randomForest(INS ~ ., data = ins.t.imputed, ntree = 150, mtry = 17, importance = TRUE)
 
 varImpPlot(rf.ins2,
            sort = TRUE,
@@ -130,7 +130,7 @@ importance(rf.ins2, type = 1)
 ins.t.imputed$random <- rnorm(8495)
 
 set.seed(12345)
-rf.ins3 <- randomForest(INS ~ ., data = ins.t.imputed, ntree = 150, mtry = 7, importance = TRUE)
+rf.ins3 <- randomForest(INS ~ ., data = ins.t.imputed, ntree = 150, mtry = 17, importance = TRUE)
 
 varImpPlot(rf.ins3,
            sort = TRUE,
