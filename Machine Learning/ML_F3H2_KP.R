@@ -109,7 +109,7 @@ varImpPlot(rf.ins,
            main = "Top 20 - Variable Importance")
 importance(rf.ins)
 
-# Tune random forest mtry value
+# Tune random forest mtry value now with ntree = 100
 set.seed(12345)
 tuneRF(x = ins.t.imputed[,-1], y = ins.t.imputed[,1], 
        plot = TRUE, ntreeTry = 100, stepFactor = 0.5)
@@ -125,18 +125,18 @@ varImpPlot(rf.ins2,
 importance(rf.ins2, type = 1)
 
 # Interpret some of the variables using partial dependence plots
-#partialPlot(rf.ins.2, ins.t.imputed, SAVBAL)
-#partialPlot(rf.ins2, ins.t.imputed, DDBAL)
+partialPlot(rf.ins2, ins.t.imputed, SAVBAL)
+partialPlot(rf.ins2, ins.t.imputed, DDABAL)
 
 # Include a random variable to determine variable selection
-ins.t.imputed$random <- rnorm(2051)
+ins.t.imputed$random <- rnorm(8495)
 
 set.seed(12345)
 rf.ins2 <- randomForest(INS ~ ., data = ins.t.imputed, ntree = 100, mtry = 7, importance = TRUE)
 
 varImpPlot(rf.ins2,
            sort = TRUE,
-           n.var = 21,
+           n.var = 30,
            main = "Look for Variables Below Random Variable")
 importance(rf.ins2)
 
