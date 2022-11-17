@@ -101,12 +101,11 @@ rf.ins = randomForest(INS ~ ., data = ins.t.imputed, ntree = 500,
 
 # Plot the change in error across different number of trees
 plot(rf.ins, main = "Number of Trees Compared to MSE")
-# go down to 100 trees
 
 #Look at variable importance
 varImpPlot(rf.ins,
            sort = TRUE,
-           n.var = 20,
+           n.var = 15,
            main = "Top 20 - Variable Importance")
 importance(rf.ins)
 
@@ -121,9 +120,9 @@ rf.ins2 <- randomForest(INS ~ ., data = ins.t.imputed, ntree = 150, mtry = 17, i
 
 varImpPlot(rf.ins2,
            sort = TRUE,
-           n.var = 20,
+           n.var = 15,
            main = "Order of Variables")
-importance(rf.ins2, type = 1)
+importance(rf.ins2)
 
 
 # Include a random variable to determine variable selection
@@ -134,22 +133,22 @@ rf.ins3 <- randomForest(INS ~ ., data = ins.t.imputed, ntree = 150, mtry = 17, i
 
 varImpPlot(rf.ins3,
            sort = TRUE,
-           n.var = 30,
+           n.var = 15,
            main = "Look for Variables Below Random Variable")
-importance(rf.ins3)
+sort(round(importance(rf.ins3, type=2), 2))
+
 
 # final model
-rf.ins4 = randomForest(INS ~ SAVBAL + BRANCH + DDABAL, 
+rf.ins4 = randomForest(INS ~ SAVBAL + DDABAL, 
                        data = ins.t.imputed, ntree = 150, importance = TRUE)
-
 
 # Interpret some of the variables using partial dependence plots
 partialPlot(rf.ins4, ins.t.imputed, SAVBAL)
 partialPlot(rf.ins4, ins.t.imputed, DDABAL)
 
-
 # ROC curve
 ins.t.imputed$p_hat = predict(rf.ins4, type = "response")
 plotROC(ins.t.imputed$INS, ins.t.imputed$p_hat)
+
 
 
