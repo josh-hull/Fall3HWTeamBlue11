@@ -6,6 +6,7 @@ library(xgboost)
 library(Ckmeans.1d.dp)
 library(pdp)
 library(InformationValue)
+library(pROC)
 
 # Read in the data
 ins.t = read.csv("/Users/kelsypeil/Desktop/AA502/Machine Learning/Homework2_ML/insurance_t.csv")
@@ -80,23 +81,11 @@ ins.t.imputed = cbind(ins.t.nomiss, ins.t.missing.cat)
 ins.t.imputed = cbind(ins.t.imputed, ins.t.missing.cont)
 
 
-#################### Change structure of variables #############################
-
-#vars = as.character(colnames(ins.t.imputed))
-#cat_vars = setdiff(vars, cont)
-
-# make categorical variables factor
-#ins.t.imputed[cat_vars] <- lapply(ins.t.imputed[cat_vars], factor)
-
-# check
-#str(ins.t.imputed)
-
-
 ##################### Random Forest ############################################
 
 # Random forest 1
 set.seed(12345)
-rf.ins = randomForest(INS ~ ., data = ins.t.imputed, ntree = 500, 
+rf.ins = randomForest(factor(INS) ~ ., data = ins.t.imputed, ntree = 500, 
                       importance = TRUE)
 
 # Plot the change in error across different number of trees
@@ -111,12 +100,13 @@ importance(rf.ins)
 
 # Tune random forest mtry value now with ntree = 150
 set.seed(12345)
-tuneRF(x = ins.t.imputed[,-1], y = ins.t.imputed[,1], 
+tuneRF(x = ins.t.imputed[,-23], y = factor(ins.t.imputed[,23]), 
        plot = TRUE, ntreeTry = 150, stepFactor = 0.5)
 
-# Re-run random forest now with ntree=150 and mtry=17
+# Re-run random forest now with ntree=150 and mtry=7
 set.seed(12345)
-rf.ins2 <- randomForest(INS ~ ., data = ins.t.imputed, ntree = 150, mtry = 17, importance = TRUE)
+rf.ins2 <- randomForest(factor(INS) ~ ., data = ins.t.imputed, 
+                        ntree = 150, mtry = 7, importance = TRUE)
 
 varImpPlot(rf.ins2,
            sort = TRUE,
@@ -129,7 +119,8 @@ importance(rf.ins2)
 ins.t.imputed$random <- rnorm(8495)
 
 set.seed(12345)
-rf.ins3 <- randomForest(INS ~ ., data = ins.t.imputed, ntree = 150, mtry = 17, importance = TRUE)
+rf.ins3 <- randomForest(factor(INS) ~ ., data = ins.t.imputed, 
+                        ntree = 150, mtry = 7, importance = TRUE)
 
 varImpPlot(rf.ins3,
            sort = TRUE,
@@ -139,7 +130,7 @@ sort(round(importance(rf.ins3, type=2), 2))
 
 
 # final model
-rf.ins4 = randomForest(INS ~ SAVBAL + DDABAL, 
+rf.ins4 = randomForest(factor(INS) ~ SAVBAL + DDABAL, 
                        data = ins.t.imputed, ntree = 150, importance = TRUE)
 
 # Interpret some of the variables using partial dependence plots
@@ -149,6 +140,11 @@ partialPlot(rf.ins4, ins.t.imputed, DDABAL)
 # ROC curve
 ins.t.imputed$p_hat = predict(rf.ins4, type = "response")
 plotROC(ins.t.imputed$INS, ins.t.imputed$p_hat)
+
+require(pROC)
+rf.roc<-roc(factor(ins.t.imputed$INS),rf.ins4$votes[,2])
+plot(rf.roc)
+auc(rf.roc)
 
 
 
