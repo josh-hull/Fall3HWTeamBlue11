@@ -81,6 +81,18 @@ ins.t.imputed = cbind(ins.t.nomiss, ins.t.missing.cat)
 ins.t.imputed = cbind(ins.t.imputed, ins.t.missing.cont)
 
 
+#################### Change structure of variables #############################
+
+vars = as.character(colnames(ins.t.imputed))
+cat_vars = setdiff(vars, cont)
+
+#make categorical variables factor
+ins.t.imputed[cat_vars] <- lapply(ins.t.imputed[cat_vars], factor)
+
+# check
+str(ins.t.imputed)
+
+
 ##################### Random Forest ############################################
 
 # Random forest 1
@@ -90,6 +102,9 @@ rf.ins = randomForest(factor(INS) ~ ., data = ins.t.imputed, ntree = 500,
 
 # Plot the change in error across different number of trees
 plot(rf.ins, main = "Number of Trees Compared to MSE")
+
+mse = as.data.frame(rf.ins$err.rate)
+write.csv(mse, "/Users/kelsypeil/Desktop/AA502/Machine Learning/Homework2_ML/rfmse.csv")
 
 #Look at variable importance
 varImpPlot(rf.ins,
@@ -127,10 +142,11 @@ varImpPlot(rf.ins3,
            n.var = 15,
            main = "Look for Variables Below Random Variable")
 sort(round(importance(rf.ins3, type=2), 2))
-
+var.imp = as.data.frame(importance(rf.ins3, type=2))
+write.csv(var.imp, "/Users/kelsypeil/Desktop/AA502/Machine Learning/Homework2_ML/varimp.csv")
 
 # final model
-rf.ins4 = randomForest(factor(INS) ~ SAVBAL + DDABAL, 
+rf.ins4 = randomForest(factor(INS) ~ SAVBAL + BRANCH + DDABAL, 
                        data = ins.t.imputed, ntree = 150, importance = TRUE)
 
 # Interpret some of the variables using partial dependence plots
@@ -145,6 +161,10 @@ require(pROC)
 rf.roc<-roc(factor(ins.t.imputed$INS),rf.ins4$votes[,2])
 plot(rf.roc)
 auc(rf.roc)
+
+rocplot = as.data.frame(cbind(rf.roc$sensitivities, rf.roc$specificities))
+colnames(rocplot) = c("Sensitivity", "1-Specificity")
+write.csv(rocplot, "/Users/kelsypeil/Desktop/AA502/Machine Learning/Homework2_ML/rocplot.csv")
 
 
 
