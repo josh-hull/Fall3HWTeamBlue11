@@ -192,5 +192,5 @@ auc(xgb.roc)
 
 rocplot = as.data.frame(cbind(xgb.roc$sensitivities, xgb.roc$specificities))
 colnames(rocplot) = c("Sensitivity", "1-Specificity")
-write.csv(rocplot, "//Users/josiahhull/Desktop/502/Machine Learning/Homework2_ML.csv")
+write.csv(rocplot, "//Users/josiahhull/Desktop/502/Machine Learning/Homework2_ML/XGB_ROC.csv")
 
