@@ -185,8 +185,6 @@ set.seed(12345)
 
 # Interpret some of the variables using partial dependence plots
 
-# xgb.ins2 <- xgboost(data = train_x, label = train_y, subsample = .75, nrounds = 16, eta = 0.2, max_depth = 5, objective = "binary:logistic")
-
 partial(xgb.ins1, pred.var = "SAVBAL", 
         plot = TRUE, rug = TRUE, alpha = 0.1, plot.engine = "lattice", train = train_x, pdp.color = "red")
 
@@ -199,7 +197,7 @@ partial(xgb.ins1, pred.var = "CDBAL", plot = TRUE, rug = TRUE, alpha = 0.1, plot
 train_x <- model.matrix(INS ~ SAVBAL + DDABAL + CDBAL + DDA + MMBAL + ACCTAGE + MM + CHECKS + CCBAL + DEPAMT + ATMAMT, data = ins.t.imputed)[, -1]
 train_y <- (ins.t.imputed$INS)
 
-xgb.ins.final <- xgboost(data = train_x, label = train_y, subsample = .85, nrounds = 18, eta = 0.2, max_depth = 6)
+xgb.ins.final <- xgboost(data = train_x, label = train_y, subsample = .75, nrounds = 16, eta = 0.2, max_depth = 5)
 
 set.seed(12345)
 ##P-values
