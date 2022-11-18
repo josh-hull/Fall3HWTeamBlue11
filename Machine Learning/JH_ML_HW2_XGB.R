@@ -185,3 +185,12 @@ plot(perf, lwd = 3, colorize = TRUE, colorkey = TRUE, colorize.palette = rev(gra
 abline(a = 0, b = 1, lty = 3)
 AUROC(ins.t.imputed$INS, phat_xgb_final)
 
+require(pROC)
+xgb.roc<-roc(factor(ins.t.imputed$INS),phat_xgb_final)
+plot(xgb.roc)
+auc(xgb.roc)
+
+rocplot = as.data.frame(cbind(xgb.roc$sensitivities, xgb.roc$specificities))
+colnames(rocplot) = c("Sensitivity", "1-Specificity")
+write.csv(rocplot, "//Users/josiahhull/Desktop/502/Machine Learning/Homework2_ML.csv")
+
