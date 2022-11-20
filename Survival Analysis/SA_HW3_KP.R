@@ -18,9 +18,6 @@ df = read.csv("https://raw.githubusercontent.com/sjsimmo2/Survival/master/hurric
 # subset to motor failure
 df.motor = df %>% filter(reason == 2)
 
-# create 12 hours back from failure time
-#df.motor$back12fromfail = df.motor$hour - 12
-
 # make data long
 df.motor$id = seq(1,112)
 
@@ -32,7 +29,11 @@ df.long = df.long %>%
 # censor observations past failure hour
 df.long$hvars = as.numeric(df.long$hvars)
 df.long.censored = df.long %>% filter(hvars <= hour & !is.na(status))
-df.long.censored$fail = ifelse(df.long.censored$survive == 0, 1, 0)
+
+# create failure variable (1 at time of failure)
+df.long.censored = df.long.censored %>%
+  group_by(id) %>%
+  mutate(fail = ifelse(hvars == hour, 1, 0))
 
 df.long.censored = df.long.censored %>% 
   group_by(id) %>%
@@ -70,13 +71,7 @@ df.long.count <- df.long.censored %>%
 
 # select variables and reorder
 df.final = df.long.count %>%
-  select(id, backup:survive, fail, hour, reason, hvars:flag12)
+  select(id, backup:survive, hour, reason, hvars:stop, fail:flag12)
 
 # export csv
 write.csv(df.final, "/Users/kelsypeil/Desktop/AA502/Survival Analysis/survhw3.csv")
-
-
-
-
-
-
