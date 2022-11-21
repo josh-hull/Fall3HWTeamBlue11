@@ -26,21 +26,30 @@ sapply(data, function(x) sum(is.na(x)))
 # Create target variable for motor failure
 data <- hurricane %>% mutate(motor_fail = ifelse(reason==2,1,0))
 
-##### Check Assumptions ########################################################
+
+##### Variable Selection of Main Effects #######################################
 full.model <- coxph(Surv(hour, motor_fail) ~ backup + age + 
                       factor(bridgecrane) + factor(servo) + factor(gear) + 
                       slope + elevation, 
                     data = data)
 
+back.model <- step(full.model, direction = "backward", 
+                   k = qchisq(0.03, 1, lower.tail = FALSE))
+summary(back.model)
+
+
+##### Check Assumptions ########################################################
 ### Check linearity assumption of continuous variables
-visreg(full.model, "age", xlab = "age", ylab = "partial residuals",
+visreg(back.model, "age", xlab = "age", ylab = "partial residuals",
        gg = TRUE, band = FALSE) +  
   geom_smooth(col = "red", fill = "red") + 
+  labs(x = "Age", y = "Partial Residuals") +
   theme_bw() 
 
-visreg(full.model, "slope", xlab = "Slope", ylab = "partial residuals",
+visreg(back.model, "slope", xlab = "Slope", ylab = "partial residuals",
        gg = TRUE, band = FALSE) +  
   geom_smooth(col = "red", fill = "red") + 
+  labs(x = "Slope", y = "Partial Residuals") +
   theme_bw()
 
 ## Martingale residuals 
@@ -48,13 +57,9 @@ pump.lin <- coxph(Surv(hour,motor_fail) ~  age + slope, data = data)
 survminer::ggcoxfunctional(pump.lin,data=data)
 
 ### Check proportional hazard assumption using Schoenfeld Residuals 
-pump.ph.zph <- cox.zph(full.model, transform = "identity")
+pump.ph.zph <- cox.zph(back.model, transform = "identity")
 pump.ph.zph
 
-##### Variable Selection of Main Effects #######################################
-back.model <- step(full.model, direction = "backward", 
-                   k = qchisq(0.03, 1, lower.tail = FALSE))
-summary(back.model)
 
 
 ##### Create Time Dependent Variable (Running for 12 hours) ####################
