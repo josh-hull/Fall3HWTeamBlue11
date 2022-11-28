@@ -199,7 +199,30 @@ ins_t_scaled <- ins_t %>%
          AGE = scale(AGE),
          CRSCORE = scale(CRSCORE)
          )
-
+ins_v_scaled <- ins_v %>% 
+  mutate(ACCTAGE = scale(ACCTAGE),
+         DDABAL = scale(DDABAL),
+         DEP = scale(DEP),
+         DEPAMT = scale(DEPAMT),
+         CHECKS = scale(CHECKS),
+         NSFAMT = scale(NSFAMT),
+         PHONE = scale(PHONE),
+         TELLER = scale(TELLER),
+         SAVBAL = scale(SAVBAL),
+         ATMAMT = scale(ATMAMT),
+         POS = scale(POS),
+         POSAMT = scale(POSAMT),
+         CDBAL = scale(CDBAL),
+         IRABAL = scale(IRABAL),
+         INVBAL = scale(INVBAL),
+         MMBAL = scale(MMBAL),
+         CCBAL = scale(CCBAL),
+         INCOME = scale(INCOME),
+         LORES = scale(LORES),
+         HMVAL = scale(HMVAL),
+         AGE = scale(AGE),
+         CRSCORE = scale(CRSCORE)
+  )
 
 
 set.seed(12345)
@@ -225,7 +248,7 @@ nn.ins.caret$bestTune
 
 #run again but with best tune
 set.seed(12345)
-nn.ins <- nnet(INS ~. , data = ins_t, size = 4, decay = 1, linout = TRUE)
+nn.ins <- nnet(INS ~. , data = ins_t_scaled, size = 4, decay = 1, linout = TRUE)
 
 
 #prediction for training data
@@ -237,7 +260,7 @@ p1 <- predict(nn.ins, ins_t_scaled)
 (1 - sum(diag(tab1)) / sum(tab1))
 
 #prediction for validation data
-valid_pred <- predict (nn.ins, ins_v)
+valid_pred <- predict (nn.ins, ins_v_scaled)
 
 (valid_pred_tab <- table(valid_pred, ins_v$INS))
 
@@ -249,7 +272,7 @@ train_roc = roc(ins_t_scaled$INS ~ p1, plot = TRUE, print.auc = TRUE)
 as.numeric(train_roc$auc)
 
 #roc curve on validation
-val_roc = roc(ins_v$INS ~ valid_pred, plot = TRUE, print.auc = TRUE)
+val_roc = roc(ins_v_scaled$INS ~ valid_pred, plot = TRUE, print.auc = TRUE)
 as.numeric(val_roc$auc)
 
 
@@ -380,7 +403,7 @@ g.f + geom_line()+
 # final model - validation 
 set.seed(12345)
 rf.ins3 <- randomForest(factor(INS) ~ SAVBAL+BRANCH+DDABAL, data = ins_t, ntree = 200, importance = TRUE)
-pred = predict(rf.ins3, newdata=ins_v type = "prob")
+pred = predict(rf.ins3, newdata=ins_v, type = "prob")
 
 library(pROC)
 roc.mul = multiclass.roc(ins_v$INS,pred)
