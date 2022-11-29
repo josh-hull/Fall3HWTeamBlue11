@@ -490,5 +490,16 @@ plot(perf, lwd = 3, colorize = TRUE, colorkey = TRUE, colorize.palette = rev(gra
 abline(a = 0, b = 1, lty = 3)
 AUROC(valid_y, phat_xgb)
 
+plotROC(factor(ins_v$INS),phat_xgb)
+
+# require(pROC)
+# xgb_roc<-roc(factor(ins_v$INS),phat_xgb, levels = c(0, 1), direction = "<")
+# plot(xgb_roc)
+# auc(xgb_roc)
+# 
+# ggroc(xgb_roc, alpha = 0.5, colour = "red", linetype = 1, size = 1)
+# gg_xgb <- ggroc(xgb_roc, legacy.axes = TRUE, colour ="red")
+# gg_xgb + xlab("FPR") + ylab("TPR") + geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="grey", linetype="dashed") + ggtitle("ROC Curve for GAM Model") + annotate("text", x=0.75, y=0.5, label= "AUROC=0.7843") 
+
 partial(xgb_ins, pred.var = "ACCTAGE", 
         plot = TRUE, rug = TRUE, alpha = 0.1, plot.engine = "lattice", train = valid_x, pdp.color = "red")
